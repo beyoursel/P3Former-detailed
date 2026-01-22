@@ -320,7 +320,7 @@ class _P3FormerHead(nn.Module):
         if self.use_sem_loss:
             sem_queries = self.sem_queries.weight.clone().squeeze(-1).squeeze(-1).repeat(1,1,batch_size).permute(2,0,1)
             for b in range(len(pe_features)):
-                sem_pred = torch.einsum("nc,vc->vn", sem_queries[b], pe_features[b])
+                sem_pred = torch.einsum("nc,vc->vn", sem_queries[b], pe_features[b]) # 基于位置编码增强的特征进行语义预测
                 sem_preds.append(sem_pred)
                 stuff_queries = sem_queries[b][self.stuff_class]
                 queries[b] = torch.cat([queries[b], stuff_queries], dim=0)
@@ -334,7 +334,7 @@ class _P3FormerHead(nn.Module):
             normed_polar_coors = [
                 voxel_coor[:, 1:] / voxel_coor.new_tensor(self.grid_size)[None, :].float()
                 for voxel_coor in voxel_coors
-            ]
+            ] # normalization the voxel coord
 
         if self.pe_type == 'cart' or self.pe_type == 'mpe':
             normed_cat_coors = []

@@ -1,0 +1,8 @@
+# Ignore Python bytecode
+*.pyc
+__pycache__/
+
+.vscode
+
+data
+work_dirs

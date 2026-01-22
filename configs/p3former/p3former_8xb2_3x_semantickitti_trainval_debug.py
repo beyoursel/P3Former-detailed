@@ -10,24 +10,37 @@ train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=40, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
+grid_shape = [160, 120, 12]
 model = dict(
+    data_preprocessor=dict(
+        type='_Det3DDataPreprocessor',
+        voxel=True,
+        voxel_type='cylindrical',
+        voxel_layer=dict(
+            grid_shape=grid_shape,
+            max_num_points=20000,
+            max_voxels=-1,
+        ),
+    ),
     voxel_encoder=dict(
-        feat_channels=[64, 128, 256, 256],
+        feat_channels=[8, 16],
         in_channels=6,
         with_voxel_center=True,
-        feat_compression=16,
+        feat_compression=8,
         return_point_feats=False),
     backbone=dict(
-        input_channels=16,
-        base_channels=32,
+        grid_size=grid_shape,
+        input_channels=8,
+        base_channels=16,
         more_conv=True,
-        out_channels=256),
+        out_channels=16),
     decode_head=dict(
-        num_decoder_layers=6,
-        num_queries=128,
-        embed_dims=256,
-        cls_channels=(256, 256, 20),
-        mask_channels=(256, 256, 256, 256, 256),
+        num_decoder_layers=1,
+        num_queries=16,
+        embed_dims=16,
+        grid_size=grid_shape,
+        cls_channels=(16, 16, 20),
+        mask_channels=(16, 16, 16, 16, 16),
         thing_class=[0,1,2,3,4,5,6,7],
         stuff_class=[8,9,10,11,12,13,14,15,16,17,18],
         ignore_index=19
@@ -54,10 +67,26 @@ param_scheduler = [
         gamma=0.2)
 ]
 
-train_dataloader = dict(batch_size=2, dataset=dict(dataset=dict(ann_file='semantickitti_infos_trainval.pkl')))
+train_dataloader = dict(
+    batch_size=1, 
+    num_workers=1,
+    dataset=dict(dataset=dict(ann_file='semantickitti_infos_trainval.pkl'))
+)
+
+test_dataloader = dict(
+    batch_size=1, 
+    num_workers=1,
+)
+
+val_dataloader = test_dataloader
 
 default_hooks = dict(
-    checkpoint=dict(type='CheckpointHook', interval=5),
+    checkpoint=dict(
+        type='CheckpointHook',
+        interval=1,
+        max_keep_ckpts=3,
+        save_optimizer=True,
+    ),
     visualization=dict(type='Det3DVisualizationHook', draw=False)       
 )
 
